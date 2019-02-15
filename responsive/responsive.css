@@ -1,0 +1,13 @@
+.homer {
+		width:310px; 
+		height:310px;
+		background:url(homer.jpg) 0 0px;
+	}
+
+@media all and (min-width: 300px) {
+	.homer {
+		width:310px; 
+		height:310px;
+		background:url(homer.jpg) 0 -310px;
+	}
+}
