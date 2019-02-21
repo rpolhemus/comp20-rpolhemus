@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Union Strike Folk Song</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+<h1 id="title">Union Strike Folk Song</h1>
+
+<video src="https://www.cs.tufts.edu/comp/20/butwehavethepower.mp4" id="butwehavethepower" controls></video>
+<div id="lyrics"></div>
+
+<script>
+	// Complete this section and create a CSS file named style.css
+	function displayText(event)
+	{
+		timeStamps = [0, 6, 17, 27, 38, 45, 53, 55, 73, 80, 82, 89, 92, 99999];
+		lyricsArr = [
+					"",
+					"Come gather round, children,<br>It's high time ye learned<br>'Bout a hero named Homer<br>And a devil named Burns.", 
+					"We'll march 'till we drop<br>The girls and the fellas.<br>We'll fight 'till the death<br>Or else fold like umbrellas.",
+					"",
+					"So we'll march day and night<br>By the big cooling tower.<br>They have the plant",
+					"<div id=\"power\">But we have the power.</div>",
+					"Now do \"Classical Gas!\"",
+					"",
+					"So we'll march day and night<br>By the big cooling tower.<br>They have the plant",
+					"But we have the power.",
+					"So we'll march day and night<br>By the big cooling tower.<br>They have the plant",
+					"But we have the power.",
+					""
+					];
+	
+		var text = document.getElementById("lyrics");
+		var time = event.target.currentTime;
+		for(var i = 1; i < timeStamps.length; i++)
+		{
+			if(timeStamps[i - 1] < time && time < timeStamps[i])
+				text.innerHTML = lyricsArr[i - 1];
+		}
+	}
+	
+	var vid = document.getElementById("butwehavethepower");
+	vid.addEventListener('timeupdate', displayText);
+</script>
+</body>
+</html>	
