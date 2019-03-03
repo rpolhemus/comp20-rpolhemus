@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Lift Knockoff</title>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <script src="https://maps.googleapis.com/maps/api/js?key="></script>
+        <!-- TODO: Change the token for this -->
+        <link rel="stylesheet" href="style.css" />
+        <script>
+            /* Constants */
+            var API_URL = "https://hans-moleman.herokuapp.com/rides";
+            var USERNAME = "cZvBHJ97";
+
+            var userLat = 0;
+            var userLng = 0;
+
+            var user = new google.maps.LatLng(userLat, userLng);
+
+            var mapOptions = {
+                zoom: 13,
+                center: me,
+                mapTypeId: google.maps.mapTypeId.ROADMAP
+            };
+
+            var map;
+            var marker;
+            var infowindow = new google.maps.InfoWindow();
+
+            function init() {
+                map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+                getUserLocation();
+            }
+
+            function getUserLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrent(function(position) {
+                        userLat = position.coords.latitude;
+                        userLng = position.coords.longitude;
+                        renderMap();
+                    });
+                    getOthers();
+                }
+                else {
+                    alert("Your web browser does not support geolocation.");
+                }
+            }
+
+            var othersList;
+
+            function getOthers() {
+                request = new XMLHttpRequest();
+
+                request.open("POST", API_URL, true, USERNAME);
+
+                request.onreadystatechange = function() {
+                    if (request.readyState == 4 && request.status == 200) {
+                        othersList = JSON.parse(request.responseText);
+                        // TODO check if error
+
+                        renderOthers();
+                    }
+                }
+            }
+
+            var tmpMarker;
+            var currLat, currLng;
+            var currName;
+
+            function renderOthers() {
+                // TODO handle weinermobile
+                for (count = 0; count < othersList.length; count++) {
+                    currName = othersList[count].username;
+                    currLat  = othersList[count].lat;
+                    currLng  = othersList[count].lng;
+
+                    tmpMarker = new google.maps.Marker({
+                        position: new google.maps.LatLng(currLat, currLng),
+                        title: currName
+                    })
+                    tmpMarker.setMap(map);
+                    google.maps.event.addListener(tmpMarker, 'click', function() {
+                        infowindow.setContent(marker.title + "\nDistance to user: " + dist(tmpMarker, user));
+                    })
+                }
+            }
+
+            function renderMap() {
+                user = new google.maps.LatLng(userLat, userLng);
+
+                map.panTo(user);
+
+                marker = new google.maps.Marker({
+                    position: user,
+                    title: "This is a test"
+                });
+                marker.setMap(map);
+
+                google.maps.event.addListener(marker, 'click', function() {
+                    infowindow.setContent(marker.title);
+                    infowindow.open(map, marker);
+                });
+            }
+        </script>
+    </head>
+
+    <body onload="init()">
+        <div id="map_canvas"></div>
+    </body>
+
+</html>
