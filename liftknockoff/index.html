@@ -4,32 +4,44 @@
     <head>
         <title>Lift Knockoff</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-        <script src="https://maps.googleapis.com/maps/api/js?key="></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE"></script>
         <!-- TODO: Change the token for this -->
         <link rel="stylesheet" href="style.css" />
         <script>
             /* Constants */
-            var API_URL = "https://hans-moleman.herokuapp.com/rides";
-            var USERNAME = "cZvBHJ97";
+            const API_URL = "https://hans-moleman.herokuapp.com/rides";
+            const USERNAME = "cZvBHJ97";
 
             var userLat = 0;
             var userLng = 0;
-
             var user = new google.maps.LatLng(userLat, userLng);
 
+            var map;
             var mapOptions = {
                 zoom: 13,
                 center: me,
                 mapTypeId: google.maps.mapTypeId.ROADMAP
             };
 
-            var map;
-            var marker;
             var infowindow = new google.maps.InfoWindow();
 
             function init() {
                 map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
                 getUserLocation();
+            }
+
+            var tmpMarker; // This or in function?
+            function addMarker(lat, lng, title, text, map) {
+                tmpMarker = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lng),
+                    title: title
+                });
+                tmpMarker.setMap(map);
+                google.maps.event.addListener(tmpMarker, 'click', function() {
+                    currInfoWindow = new google.maps.InfoWindow();
+                    currInfoWindow.setContent(text);
+                });
+
             }
 
             function getUserLocation() {
@@ -67,21 +79,16 @@
             var currLat, currLng;
             var currName;
 
-            function renderOthers() {
+            function renderOthers(others, map) {
                 // TODO handle weinermobile
                 for (count = 0; count < othersList.length; count++) {
-                    currName = othersList[count].username;
-                    currLat  = othersList[count].lat;
-                    currLng  = othersList[count].lng;
+                    currName = others[count].username;
+                    currLat  = others[count].lat;
+                    currLng  = others[count].lng;
+                    currDist = google.maps.geometry.spherical.computeDistanceBetween(user, new google.maps.LatLng(currLat, currLng));
+                    currText = currName + "\nCurrent Distance: " + currDist;
 
-                    tmpMarker = new google.maps.Marker({
-                        position: new google.maps.LatLng(currLat, currLng),
-                        title: currName
-                    })
-                    tmpMarker.setMap(map);
-                    google.maps.event.addListener(tmpMarker, 'click', function() {
-                        infowindow.setContent(marker.title + "\nDistance to user: " + dist(tmpMarker, user));
-                    })
+                    addMarker(currLat, currLng, currName, currText, map);
                 }
             }
 
