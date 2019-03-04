@@ -19,14 +19,14 @@
             var map;
             var mapOptions = {
                 zoom: 13,
-                center: me,
-                mapTypeId: google.maps.mapTypeId.ROADMAP
+                center: user,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
             };
 
             var infowindow = new google.maps.InfoWindow();
 
             function init() {
-                map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
                 getUserLocation();
             }
 
@@ -46,7 +46,7 @@
 
             function getUserLocation() {
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrent(function(position) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
                         userLat = position.coords.latitude;
                         userLng = position.coords.longitude;
                         renderMap();
@@ -61,18 +61,22 @@
             var othersList;
 
             function getOthers() {
+                console.log("In getOthers()");
                 request = new XMLHttpRequest();
 
                 request.open("POST", API_URL, true, USERNAME);
+                request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
                 request.onreadystatechange = function() {
                     if (request.readyState == 4 && request.status == 200) {
                         othersList = JSON.parse(request.responseText);
                         // TODO check if error
-
+                        console.log("About to render others");
                         renderOthers();
+                        console.log("Rendered others");
                     }
                 }
+                request.send("username=" + USERNAME + "&lat=" + userLat + "&lng=" + userLng);
             }
 
             var tmpMarker;
@@ -107,6 +111,7 @@
                     infowindow.setContent(marker.title);
                     infowindow.open(map, marker);
                 });
+                console.log("Render success");
             }
         </script>
     </head>
