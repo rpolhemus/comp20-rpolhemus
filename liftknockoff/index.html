@@ -78,6 +78,23 @@
                 }
                 request.send("username=" + USERNAME + "&lat=" + userLat + "&lng=" + userLng);
             }
+			
+			function getOthers () {
+				var request = new XMLHttpRequest();
+				var url = 'get_data.php';
+				var params = 'orem=ipsum&name=binny';
+				request.open('POST', url, true);
+
+				//Send the proper header information along with the request
+				request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+				request.onreadystatechange = function() {//Call a function when the state changes.
+					if(request.readyState == 4 && request.status == 200) {
+						alert(request.responseText);
+					}
+				}
+				request.send(params);
+			}
 
             var tmpMarker;
             var currLat, currLng;
