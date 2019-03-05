@@ -4,13 +4,18 @@
     <head>
         <title>Lift Knockoff</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE&libraries=geometry"></script>
         <!-- TODO: Change the token for this -->
         <link rel="stylesheet" href="style.css" />
         <script>
             /* Constants */
             const API_URL = "https://hans-moleman.herokuapp.com/rides";
             const USERNAME = "cZvBHJ97";
+            const ALT_CAR_IMG_LOC = "/images/weinermobile.png";
+            const DEFAULT_IMG_LOC = "/images/person.png"; // TODO update to default images?
+            const VEHICLE_IMG_LOC = "/images/car.png";
+            const PERSON_IMG_LOC  = "/images/person.png";
+
 
             var userLat = 0;
             var userLng = 0;
@@ -30,16 +35,18 @@
                 getUserLocation();
             }
 
-            var tmpMarker; // This or in function?
-            function addMarker(lat, lng, title, text, map) {
-                tmpMarker = new google.maps.Marker({
-                    position: new google.maps.LatLng(lat, lng),
-                    title: title
+            //var tmpMarker; // This or in function?
+
+            function addMarker(pos, title, text, map, icon) {
+                var tmpMarker = new google.maps.Marker({
+                    position: pos,
+                    title: title,
+                    icon: icon
                 });
                 tmpMarker.setMap(map);
                 google.maps.event.addListener(tmpMarker, 'click', function() {
-                    currInfoWindow = new google.maps.InfoWindow();
-                    currInfoWindow.setContent(text);
+                    infowindow.setContent(text);
+                    infowindow.open(map, tmpMarker);
                 });
 
             }
@@ -58,39 +65,23 @@
                 }
             }
 
-            var othersList;
-
-            function getOthers() {
-                console.log("In getOthers()");
-                request = new XMLHttpRequest();
-
-                request.open("POST", API_URL, true, USERNAME);
-                request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-
-                request.onreadystatechange = function() {
-                    if (request.readyState == 4 && request.status == 200) {
-                        othersList = JSON.parse(request.responseText);
-                        // TODO check if error
-                        console.log("About to render others");
-                        renderOthers();
-                        console.log("Rendered others");
-                    }
-                }
-                request.send("username=" + USERNAME + "&lat=" + userLat + "&lng=" + userLng);
-            }
+            var othersObj;
 			
 			function getOthers () {
 				var request = new XMLHttpRequest();
-				var url = 'get_data.php';
-				var params = 'orem=ipsum&name=binny';
-				request.open('POST', url, true);
+				var params = 'username=' + USERNAME + "&lat=" + userLat + "&lng=" + userLng;
+                request.open('POST', API_URL, true);
+                console.log("API_URL is " + API_URL);
 
 				//Send the proper header information along with the request
 				request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
 				request.onreadystatechange = function() {//Call a function when the state changes.
 					if(request.readyState == 4 && request.status == 200) {
-						alert(request.responseText);
+						othersObj = JSON.parse(request.responseText);
+                        // TODO check if error
+                        console.log(othersObj);
+                        renderOthers(othersObj, map);
 					}
 				}
 				request.send(params);
@@ -99,17 +90,32 @@
             var tmpMarker;
             var currLat, currLng;
             var currName;
+            var othersList;
+            var othersImg = DEFAULT_IMG_LOC;
 
             function renderOthers(others, map) {
                 // TODO handle weinermobile
-                for (count = 0; count < othersList.length; count++) {
-                    currName = others[count].username;
-                    currLat  = others[count].lat;
-                    currLng  = others[count].lng;
-                    currDist = google.maps.geometry.spherical.computeDistanceBetween(user, new google.maps.LatLng(currLat, currLng));
-                    currText = currName + "\nCurrent Distance: " + currDist;
+                if(others.vehicles != undefined) {
+                    othersList = others.vehicles;
+                    othersImg = VEHICLE_IMG_LOC;
+                }
+                else if(others.passengers != undefined) {
+                    othersList = others.passengers;
+                    othersImg = PERSON_IMG_LOC;
+                }
 
-                    addMarker(currLat, currLng, currName, currText, map);
+
+                for (count = 0; count < othersList.length; count++) {
+                    currName = othersList[count].username;
+                    currPos  = new google.maps.LatLng(othersList[count].lat, othersList[count].lng);
+                    currDist = google.maps.geometry.spherical.computeDistanceBetween(user, currPos);
+                    currText = currName + "\nCurrent Distance: " + currDist;
+                    console.log(currText);
+
+                    if(currName == 'WEINERMOBILE')
+                        addMarker(currPos, currName, currText, map, ALT_CAR_IMG_LOC);
+
+                    addMarker(currPos, currName, currText, map, othersImg);
                 }
             }
 
@@ -118,16 +124,17 @@
 
                 map.panTo(user);
 
-                marker = new google.maps.Marker({
-                    position: user,
-                    title: "This is a test"
-                });
-                marker.setMap(map);
+                addMarker(user, "User", "User", map);
+                // marker = new google.maps.Marker({
+                //     position: user,
+                //     title: "This is a test"
+                // });
+                // marker.setMap(map);
 
-                google.maps.event.addListener(marker, 'click', function() {
-                    infowindow.setContent(marker.title);
-                    infowindow.open(map, marker);
-                });
+                // google.maps.event.addListener(marker, 'click', function() {
+                //     infowindow.setContent(marker.title);
+                //     infowindow.open(map, marker);
+                // });
                 console.log("Render success");
             }
         </script>
