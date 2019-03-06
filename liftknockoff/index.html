@@ -3,7 +3,7 @@
 <html>
     <head>
         <title>Lift Knockoff</title>
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" charset='utf-8'/>
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE&libraries=geometry"></script>
         <!-- TODO: Change the token for this -->
         <link rel="stylesheet" href="style.css" />
@@ -19,7 +19,7 @@
 
             var userLat = 0;
             var userLng = 0;
-            var user = new google.maps.LatLng(userLat, userLng);
+            var user;
 
             var map;
             var mapOptions = {
@@ -31,7 +31,7 @@
             var infowindow = new google.maps.InfoWindow();
 
             function init() {
-                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+                map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);  
                 getUserLocation();
             }
 
@@ -44,10 +44,13 @@
                     icon: icon
                 });
                 tmpMarker.setMap(map);
-                google.maps.event.addListener(tmpMarker, 'click', function() {
-                    infowindow.setContent(text);
-                    infowindow.open(map, tmpMarker);
-                });
+                if(text != "") {
+                    google.maps.event.addListener(tmpMarker, 'click', function() {
+                        infowindow.setContent(text);
+                        infowindow.open(map, tmpMarker);
+                    });
+                }
+                return tmpMarker;
 
             }
 
@@ -57,8 +60,8 @@
                         userLat = position.coords.latitude;
                         userLng = position.coords.longitude;
                         renderMap();
+                        getOthers();
                     });
-                    getOthers();
                 }
                 else {
                     alert("Your web browser does not support geolocation.");
@@ -68,20 +71,21 @@
             var othersObj;
 			
 			function getOthers () {
+                console.log("Starting to construct packet");
 				var request = new XMLHttpRequest();
 				var params = 'username=' + USERNAME + "&lat=" + userLat + "&lng=" + userLng;
                 request.open('POST', API_URL, true);
-                console.log("API_URL is " + API_URL);
 
 				//Send the proper header information along with the request
 				request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
 				request.onreadystatechange = function() {
 					if(request.readyState == 4 && request.status == 200) {
+                        console.log("Packet finished");
 						othersObj = JSON.parse(request.responseText);
                         // TODO check if error
-                        console.log(othersObj);
                         renderOthers(othersObj, map);
+                        updateUserText(userMarker);
 					}
 				}
 				request.send(params);
@@ -92,6 +96,7 @@
             var currName;
             var othersList;
             var othersImg = DEFAULT_IMG_LOC;
+            var altImg    = ALT_CAR_IMG_LOC;
 
             function renderOthers(others, map) {
                 // TODO handle weinermobile
@@ -108,37 +113,80 @@
                 for (count = 0; count < othersList.length; count++) {
                     currName = othersList[count].username;
                     currPos  = new google.maps.LatLng(othersList[count].lat, othersList[count].lng);
-                    currDist = google.maps.geometry.spherical.computeDistanceBetween(user, currPos);
+                    currDist = getDist(user, currPos);
                     currText = currName + "\nCurrent Distance: " + currDist;
-                    console.log(currText);
 
                     if(currName == 'WEINERMOBILE') {
-                        addMarker(currPos, currName, currText, map, ALT_CAR_IMG_LOC);
-                        console.log("FOUND THE WEINERMOBILE");
+                        addMarker(currPos, currName, currText, map, altImg);
                     } else {
                         addMarker(currPos, currName, currText, map, othersImg);
                     }
                 }
             }
 
+            var userMarker;
             function renderMap() {
                 user = new google.maps.LatLng(userLat, userLng);
 
                 map.panTo(user);
 
-                addMarker(user, "User", "User", map);
-                // marker = new google.maps.Marker({
-                //     position: user,
-                //     title: "This is a test"
-                // });
-                // marker.setMap(map);
 
-                // google.maps.event.addListener(marker, 'click', function() {
-                //     infowindow.setContent(marker.title);
-                //     infowindow.open(map, marker);
-                // });
-                console.log("Render success");
+                userMarker = addMarker(user, "User", "", map);
             }
+
+            function updateUserText(marker)
+            {
+                closestOther        = getClosest(user, "", "WEINERMOBILE"); // Anything not called WEINERMOBILE
+                closestOtherLoc     = new google.maps.LatLng(closestOther.lat, closestOther.lng);
+                closestWeinermobile = getClosest(user, "WEINERMOBILE", ""); // Anything that IS called WEINERMOBILE
+                closestMobileLoc    = new google.maps.LatLng(closestWeinermobile.lat, closestWeinermobile.lng);
+
+                currText = USERNAME + " is " + getDist(user, closestOtherLoc) + " miles from the closest other";
+
+                if(closestWeinermobile != null)
+                    currText += " and is " + getDist(user, closestMobileLoc) + " miles from the closest weinermobile";
+
+                google.maps.event.addListener(marker, 'click', function() {
+                    infowindow.setContent(currText);
+                    infowindow.open(map, marker);
+                });
+            }
+
+            // Origin is a google LatLng object, targetName (default to empty str) is the name, if any,
+            //      of the target. avoidName (default to empty str) is the name, if any, to be avoided
+            function getClosest(origin, targetName="", avoidName="") 
+            {
+                closestOther = null;
+
+                for(i = 0; i < othersList.length; i++) {
+                    if(targetName != "" && targetName != othersList[i].username)
+                        continue;
+                    if(avoidName != "" && avoidName == othersList[i].username)
+                        continue;
+
+                    // Complete jank, but we can't default to othersList[0] while looking for a target :/
+                    // This will grab the first other that matches the names, and use that as a default
+                    if(closestOther == null) {
+                        closestOther = othersList[i]; 
+                        continue;
+                    }
+                    
+                    nextLoc = new google.maps.LatLng(othersList[i].lat, othersList[i].lng)
+                    if(getDist(origin, nextLoc) < getDist(origin, nextLoc))
+                        closestOther = othersList[i];
+                }
+                return closestOther;
+            }
+
+            function getDist(src, dest) 
+            {
+                console.log(src);
+                console.log(dest);
+                meters = google.maps.geometry.spherical.computeDistanceBetween(src, dest);
+                // Conversion factor meters -> miles
+                return meters * 0.0006213712;
+            }
+
         </script>
     </head>
 
