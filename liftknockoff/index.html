@@ -5,16 +5,17 @@
         <title>Lift Knockoff</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no" charset='utf-8'/>
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE&libraries=geometry"></script>
-        <!-- TODO: Change the token for this -->
         <link rel="stylesheet" href="style.css" />
+        
         <script>
             /* Constants */
             const API_URL = "https://hans-moleman.herokuapp.com/rides";
             const USERNAME = "cZvBHJ97";
             const ALT_CAR_IMG_LOC = "/images/weinermobile.png";
-            const DEFAULT_IMG_LOC = "/images/person.png"; // TODO update to default images?
+            const DEFAULT_IMG_LOC = "/images/person.png"; 
             const VEHICLE_IMG_LOC = "/images/car.png";
             const PERSON_IMG_LOC  = "/images/person.png";
+            const USER_IMG_LOC    = "/images/user.png";
 
 
             var userLat = 0;
@@ -37,7 +38,7 @@
 
             //var tmpMarker; // This or in function?
 
-            function addMarker(pos, title, text, map, icon) {
+            function addMarker(pos, title, text, map, icon=DEFAULT_IMG_LOC) {
                 var tmpMarker = new google.maps.Marker({
                     position: pos,
                     title: title,
@@ -71,7 +72,6 @@
             var othersObj;
 			
 			function getOthers () {
-                console.log("Starting to construct packet");
 				var request = new XMLHttpRequest();
 				var params = 'username=' + USERNAME + "&lat=" + userLat + "&lng=" + userLng;
                 request.open('POST', API_URL, true);
@@ -81,7 +81,6 @@
 
 				request.onreadystatechange = function() {
 					if(request.readyState == 4 && request.status == 200) {
-                        console.log("Packet finished");
 						othersObj = JSON.parse(request.responseText);
                         // TODO check if error
                         renderOthers(othersObj, map);
@@ -131,7 +130,7 @@
                 map.panTo(user);
 
 
-                userMarker = addMarker(user, "User", "", map);
+                userMarker = addMarker(user, "User", "", map, USER_IMG_LOC);
             }
 
             function updateUserText(marker)
@@ -171,8 +170,9 @@
                         continue;
                     }
                     
-                    nextLoc = new google.maps.LatLng(othersList[i].lat, othersList[i].lng)
-                    if(getDist(origin, nextLoc) < getDist(origin, nextLoc))
+                    currLoc = new google.maps.LatLng(closestOther.lat, closestOther.lng)
+                    nextLoc = new google.maps.LatLng(othersList[i].lat, othersList[i].lng);
+                    if(getDist(origin, nextLoc) < getDist(origin, currLoc))
                         closestOther = othersList[i];
                 }
                 return closestOther;
@@ -180,8 +180,6 @@
 
             function getDist(src, dest) 
             {
-                console.log(src);
-                console.log(dest);
                 meters = google.maps.geometry.spherical.computeDistanceBetween(src, dest);
                 // Conversion factor meters -> miles
                 return meters * 0.0006213712;
