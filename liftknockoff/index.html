@@ -9,7 +9,7 @@
         
         <script>
             /* Constants */
-            const API_URL = "https://hans-moleman.herokuapp.com/rides";
+            const API_URL = "https://hidden-fjord-42761.herokuapp.com/rides";
             const USERNAME = "cZvBHJ97";
             const ALT_CAR_IMG_LOC = "/images/weinermobile.png";
             const DEFAULT_IMG_LOC = "/images/person.png"; 
@@ -136,9 +136,14 @@
             function updateUserText(marker)
             {
                 closestOther        = getClosest(user, "", "WEINERMOBILE"); // Anything not called WEINERMOBILE
+                if (closestOther == null)
+                {
+                    return;
+                }
                 closestOtherLoc     = new google.maps.LatLng(closestOther.lat, closestOther.lng);
                 closestWeinermobile = getClosest(user, "WEINERMOBILE", ""); // Anything that IS called WEINERMOBILE
                 closestMobileLoc    = new google.maps.LatLng(closestWeinermobile.lat, closestWeinermobile.lng);
+                
 
                 currText = USERNAME + " is " + getDist(user, closestOtherLoc) + " miles from the closest other";
 
