@@ -142,13 +142,13 @@
                 }
                 closestOtherLoc     = new google.maps.LatLng(closestOther.lat, closestOther.lng);
                 closestWeinermobile = getClosest(user, "WEINERMOBILE", ""); // Anything that IS called WEINERMOBILE
-                closestMobileLoc    = new google.maps.LatLng(closestWeinermobile.lat, closestWeinermobile.lng);
-                
 
                 currText = USERNAME + " is " + getDist(user, closestOtherLoc) + " miles from the closest other";
-
-                if(closestWeinermobile != null)
+                
+                if(closestWeinermobile != null) {
+                    closestMobileLoc    = new google.maps.LatLng(closestWeinermobile.lat, closestWeinermobile.lng);
                     currText += " and is " + getDist(user, closestMobileLoc) + " miles from the closest weinermobile";
+                }
 
                 google.maps.event.addListener(marker, 'click', function() {
                     infowindow.setContent(currText);
