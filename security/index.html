@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Security Analysis</title>
+        <link rel="stylesheet" href="style.css" type="text/css" />
+    </head>
+
+    <body>
+        <h1>Security Analysis of Ridesharing Service</h1>
+
+        <h2>Introduction</h2>
+        <p>
+            The product under review is a client and backend database to connect passengers with drivers for a carpool
+            service akin to the popular Uber and Lyft. Users are provided with the ability to post their location and
+            receive in return a list of the most recent users of the other type. <br>
+            This review was commissioned to determine any security flaws present in the application, and to recommend
+            possible revisions to fix these flaws. 
+        </p>
+
+        <h2>Methodology</h2>
+        <p>
+            The product was assessed by hand and with the assistance of two tools. Possible weaknesses were first probed with 
+            handcrafted payloads. Other flaws were then found with OWASP {TODO FILL IN}, and burpsuite was used in experimenting
+            with packet payloads.
+        </p>
+
+        <h2>Abstract of Findings</h2>
+        <p>
+            Three main issues were found in the product. They are, in decreasing order of severity, 
+            <ul>
+                    <li>
+                        Compromised Privacy <br> - Attackers are able to view the records of all other passengers in the
+                        database</li>
+                    <li>
+                    <li>
+                        XSS injection through username <br> - Attackers are able to insert code that will be run with
+                        the permissions of the website, when a page is viewed.
+                    </li>
+                        Faulty Logic <br> - The database will record users even if provided fields (username and location) 
+                        are not valid
+                    </li>
+            </ul> 
+        </p>
+        <h2>Issues Found</h2>
+        <p>
+            The three issues mentioned before, broken down:<br><br>
+
+            Compromised Privacy
+            <ul>
+                <li>
+                    Location: /passenger.json GET request<br>
+                </li>
+                <li>
+                    Severity of Issue: Medium-High; this is a very easy vulnerability to exploit, with all of the collected
+                    user data at risk of being revealed to any attacker.
+                </li>
+                <li>
+                    Description of Issue: No input sanitization enables attacker to provide logic on GET request, 
+                    thereby printing the entirety of the database.
+                </li>
+                <li>
+                    Proof of Vulnerability: <img src="/images/privacy_screencap.png" alt="Proof of Privacy Vulnerability"><br>
+                    Note: due to an injected redirection payload, the entirety of the page is not visible at once without 
+                    being forced off of the page.
+                </li>
+                <li>
+                    Resolution: {TODO RESOLUTION STUFFS}
+                </li>
+            </ul>
+
+            XSS Injection
+            <ul>
+                <li>
+                    Location: Username entry API and GET route /passenger.json<br>
+                </li>
+                <li>
+                    Severity of Issue: Medium; XSS can be a large problem, but the injection possible here is relatively
+                    out of the way of a normal user.
+                </li>
+                <li>
+                    Description of Issue: A lack of input sanitization on the username field allows attackers to input 
+                    scripting in the field and, then access the relevant passenger.json to run the script.
+                </li>
+                <li>
+                    Proof of Vulnerability: <img src="/images/xss_screencap.png" alt="Proof of XSS Vulnerability">
+                </li>
+                <li>
+                    Resolution: {TODO RESOLUTION STUFFS}
+                </li>
+            </ul>
+
+            Faulty Logic
+            <ul>
+                <li>
+                    Location: POST request api<br>
+                </li>
+                <li>
+                    Severity of Issue: Low; very little is at risk aside from database pollution with junk data.
+                </li>
+                <li>
+                    Description of Issue: The checks to affirm the username, lat, and lng are valid are not stringent enough,
+                    and permit documents to be created in the database with one or more fields meaningless; although there are
+                    checks in place to ensure lat and lng are in the valid range if they are numbers, there are no checks to
+                    ensure that they are numbers in the first place; a lat and lng of NaN is quite possible and quite useless.
+                </li>
+                <li>
+                    Proof of Vulnerability: <img src="/images/logic_screencap.png" alt="Proof of Faulty Logic">
+                </li>
+                <li>
+                    Resolution: Returning a "faulty data response" (eg, with {TODO ADD THIS THING HERE}) if either lat or lng
+                    are NaN would solve this problem rather simply. Sanitizing username already falls under the XSS injection
+                    mentioned earlier, but is a similar problem.
+                </li>
+            </ul>
+            
+        </p>
+
+        <h2>Conclusion</h2>
+        <p>
+            Some future considerations include scalability and impersonation issues. Server load issues were not tested in this
+            investigation, but with the current setup will certainly be an issue. In addition, it is very easy for users to
+            impersonate others by making a POST request with their username, then making future POST requests with whatever usernames
+            were returned as nearby. This enables passengers to see all other passengers, as well as simply cluttering the database
+            with incorrect data.
+        </p>
+
+        <h2>References</h2>
+        <p>
+            {TODO REFERENCES HERE}}
+        </p>
+    </body>
+</html>	
