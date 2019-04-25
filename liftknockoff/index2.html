@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>Lift</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <meta charset="utf-8" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC-u0xf-Zaql2EJIo3IEtWUSzyXg2TfqZE&libraries=geometry"></script>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      var myLat = 42.3519;
+      var myLng = -71.0551;
+      var me = new google.maps.LatLng(myLat, myLng);
+      var myOptions = {
+        zoom: 13, // The larger the zoom number, the bigger the zoom
+        center: me,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      var map;
+      var marker;
+      var meMarker;
+      var infowindow = new google.maps.InfoWindow();
+
+      function init() {
+        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        getMyLocation();
+      }
+
+      function getMyLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            myLat = position.coords.latitude;
+            myLng = position.coords.longitude;
+            renderMap();
+          });
+        }
+        else {
+          alert("Geolocation is not supported by your web browser.  What a shame!");
+        }
+      }
+
+      function renderMap() {
+        closestDistance = 99999;
+        closestVehicle = {};
+        weinermobile = "<p>Weinermobile is nowhere to be found</p>";
+        me = new google.maps.LatLng(myLat, myLng);
+        map.panTo(me);
+        meMarker = new google.maps.Marker({
+          position: me,
+          icon: "/images/user.png",
+          title: "Here I Am!"
+        });
+        meMarker.setMap(map);
+        google.maps.event.addListener(meMarker, 'click', function() {
+          infowindow.setContent(meMarker.title);
+          infowindow.open(map, meMarker);
+        });
+        request = new XMLHttpRequest();
+        request.open("POST", "https://hidden-fjord-42761.herokuapp.com/rides", true);
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        request.onreadystatechange = function() {
+          if (request.readyState == 4 && request.status == 200) {
+            data = JSON.parse(request.responseText);
+            if ("vehicles" in data) {
+              for (var count = 0; count < data["vehicles"].length; count++) {
+                distance = google.maps.geometry.spherical.computeDistanceBetween(me, new google.maps.LatLng(data["vehicles"][count].lat, data["vehicles"][count].lng)) * 0.00062137;
+                if (closestDistance > distance) {
+                  closestDistance = distance;
+                  closestVehicle = data["vehicles"][count];
+                }
+                if (data["vehicles"][count].username == "WEINERMOBILE") {
+                  marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(data["vehicles"][count].lat, data["vehicles"][count].lng),
+                    title: data["vehicles"][count].username + " is " + distance + "mi away from you",
+                    icon: "/images/weinermobile.png"
+                  });
+                  weinermobile = "<p>The Weinermobile is " + distance + "mi away!</p>";          
+                }
+                else {
+                  marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(data["vehicles"][count].lat, data["vehicles"][count].lng),
+                    title: data["vehicles"][count].username + " is " + distance + "mi away from you",
+                    icon: "/images/car.png"
+                  });
+                }
+                marker.setMap(map);
+                google.maps.event.addListener(marker, 'click', function() {
+                  infowindow.setContent(this.title);
+                  infowindow.open(map, this);
+                });
+              };
+              google.maps.event.addListener(meMarker, 'click', function() {
+                infowindow.setContent("<p>Closest Lift car away from you is " + closestVehicle.username + ", " + closestDistance + "mi away</p>" + weinermobile);
+                infowindow.open(map, meMarker);
+              });
+            }
+            else {
+              for (var count = 0; count < data["passengers"].length; count++) {
+                distance = google.maps.geometry.spherical.computeDistanceBetween(me, new google.maps.LatLng(data["passengers"][count].lat, data["passengers"][count].lng)) * 0.00062137;
+                if (closestDistance > distance) {
+                  closestDistance = distance;
+                  closestVehicle = data["passengers"][count];
+                }
+                if (data["passengers"][count].username == "WEINERMOBILE") {
+                  marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(data["passengers"][count].lat, data["passengers"][count].lng),
+                    title: data["passengers"][count].username + " is " + distance + "mi away from you",
+                    icon: "/images/weinermobile.png"
+                  });
+                  weinermobile = "<p>The Weinermobile is " + distance + "mi away!</p>";
+                }
+                else {
+                  marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(data["passengers"][count].lat, data["passengers"][count].lng),
+                    title: data["passengers"][count].username + " is " + distance + "mi away from you",
+                    icon: "/images/person.png"
+                  });
+                }
+                marker.setMap(map);
+                google.maps.event.addListener(marker, 'click', function() {
+                  infowindow.setContent(this.title);
+                  infowindow.open(map, this);
+                });
+              };
+              google.maps.event.addListener(meMarker, 'click', function() {
+                infowindow.setContent("<p>Closest passenger away from you is " + closestVehicle.username + ", " + closestDistance + "mi away</p>" + weinermobile);
+                infowindow.open(map, meMarker);
+              });
+            }
+          }
+        };
+        request.send("username=JANET&lat=" + myLat + "&lng=" + myLng);
+      }
+    </script>
+  </head>
+  
+  <body onload="init()">
+    <div id="map_canvas"></div>
+  </body>
+</html>

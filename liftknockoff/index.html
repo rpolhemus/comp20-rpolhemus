@@ -81,7 +81,8 @@
 
 				request.onreadystatechange = function() {
 					if(request.readyState == 4 && request.status == 200) {
-						othersObj = JSON.parse(request.responseText);
+                        othersObj = JSON.parse(request.responseText);
+                        console.log(othersObj)
                         // TODO check if error
                         renderOthers(othersObj, map);
                         updateUserText(userMarker);
@@ -107,6 +108,8 @@
                     othersList = others.passengers;
                     othersImg = PERSON_IMG_LOC;
                 }
+
+                console.log(othersList)
 
 
                 for (count = 0; count < othersList.length; count++) {
@@ -135,7 +138,7 @@
 
             function updateUserText(marker)
             {
-                closestOther        = getClosest(user, "", "WEINERMOBILE"); // Anything not called WEINERMOBILE
+                closestOther = getClosest(user, "", "WEINERMOBILE"); // Anything not called WEINERMOBILE
                 if (closestOther == null)
                 {
                     return;

@@ -21,7 +21,7 @@
         <h2>Methodology</h2>
         <p>
             The product was assessed by hand and with the assistance of two tools. Possible weaknesses were first probed with 
-            handcrafted payloads. Other flaws were then found with OWASP {TODO FILL IN}, and burpsuite was used in experimenting
+            handcrafted payloads. Other flaws were then found with OWASP ZAP, and burpsuite was used in experimenting
             with packet payloads.
         </p>
 
@@ -31,12 +31,13 @@
             <ul>
                     <li>
                         Compromised Privacy <br> - Attackers are able to view the records of all other passengers in the
-                        database</li>
-                    <li>
+                        database
+					</li>
                     <li>
                         XSS injection through username <br> - Attackers are able to insert code that will be run with
                         the permissions of the website, when a page is viewed.
                     </li>
+					<li>
                         Faulty Logic <br> - The database will record users even if provided fields (username and location) 
                         are not valid
                     </li>
@@ -46,7 +47,7 @@
         <p>
             The three issues mentioned before, broken down:<br><br>
 
-            Compromised Privacy
+            <h4>Compromised Privacy</h4>
             <ul>
                 <li>
                     Location: /passenger.json GET request<br>
@@ -60,16 +61,18 @@
                     thereby printing the entirety of the database.
                 </li>
                 <li>
-                    Proof of Vulnerability: <img src="/images/privacy_screencap.png" alt="Proof of Privacy Vulnerability"><br>
-                    Note: due to an injected redirection payload, the entirety of the page is not visible at once without 
-                    being forced off of the page.
+                    Proof of Vulnerability: <br>
+					NOTE: due to an injected redirection payload, the entirety of the page is not visible at once without 
+                    being forced off of the page; ignore the alert, the background is what's interesting.<img src="images/privacy_screencap.png" alt="Proof of Privacy Vulnerability" height=300><br>
+                    
                 </li>
                 <li>
-                    Resolution: {TODO RESOLUTION STUFFS}
+                    Resolution: <br> Sanitizing the query string by removing
+					all invalid characters (the passenger usernames should only have alphanumeric characters), possibly through the use of the NodeJS validator library, would patch this exploit. Alternatively, you could reject any requests with invalid characters (ie response.send("error: Whoops, something is wrong with your data!"); ). 
                 </li>
             </ul>
 
-            XSS Injection
+            <h4>XSS Injection</h4>
             <ul>
                 <li>
                     Location: Username entry API and GET route /passenger.json<br>
@@ -83,14 +86,14 @@
                     scripting in the field and, then access the relevant passenger.json to run the script.
                 </li>
                 <li>
-                    Proof of Vulnerability: <img src="/images/xss_screencap.png" alt="Proof of XSS Vulnerability">
+                    Proof of Vulnerability: <img src="images/xss_screencap.png" alt="Proof of XSS Vulnerability" height=300>
                 </li>
                 <li>
-                    Resolution: {TODO RESOLUTION STUFFS}
+                    Resolution: Similar to the previous exploit, this one can be solved fairly easily by using validator to forbid non-alphanumeric characters in usernames. Either removing the characters or sending a failure response if there is an invalid character would work.
                 </li>
             </ul>
 
-            Faulty Logic
+            <h4>Faulty Logic</h4>
             <ul>
                 <li>
                     Location: POST request api<br>
@@ -105,10 +108,10 @@
                     ensure that they are numbers in the first place; a lat and lng of NaN is quite possible and quite useless.
                 </li>
                 <li>
-                    Proof of Vulnerability: <img src="/images/logic_screencap.png" alt="Proof of Faulty Logic">
+                    Proof of Vulnerability: <img src="images/logic_screencap.png" alt="Proof of Faulty Logic" height=100>
                 </li>
                 <li>
-                    Resolution: Returning a "faulty data response" (eg, with {TODO ADD THIS THING HERE}) if either lat or lng
+                    Resolution: Returning a "faulty data response" (eg, with response.send("error: Whoops, something is wrong with your data!");) if either lat or lng
                     are NaN would solve this problem rather simply. Sanitizing username already falls under the XSS injection
                     mentioned earlier, but is a similar problem.
                 </li>
@@ -127,7 +130,7 @@
 
         <h2>References</h2>
         <p>
-            {TODO REFERENCES HERE}}
+            In completing this evaluation, the questions and answers on Piazza were consulted heavily. In particular, <a href=https://sites.google.com/site/iasoncs/home/database-security/nosql-injection>this site</a> recommended on Piazza was quite helpful.
         </p>
     </body>
 </html>	
